@@ -1,0 +1,6 @@
+Makefile
+*.o
+fbshow
+config.log
+config.status
+config.h
