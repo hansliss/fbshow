@@ -22,7 +22,7 @@
 #define max(x, y) (((x) < (y))?(y):(x))
 
 void usage(char *progname) {
-  fprintf(stderr, "Usage: %s -F <framebuffer> [-i <image file>] [-f <fontfile> -s <fontsize> <x:y:col:text> ...]\n", progname);
+  fprintf(stderr, "Usage: %s -F <framebuffer> [-i <image file>] [-f <fontfile> -s <fontsize> [-o <y offset>] <x:y:col:text> ...]\n", progname);
 }
 
 // Render a single character on the screen using the selected font and colour.
@@ -130,8 +130,9 @@ int main(int argc, char *argv[]) {
   char *fbpath = NULL;
   char *fontpath = NULL;
   int fontsize = 0;
+  int txtoffs = 0;
 
-  while ((o=getopt(argc, argv, "i:rf:F:s:")) != -1) {
+  while ((o=getopt(argc, argv, "i:rf:F:s:o:")) != -1) {
     switch(o) {
     case 'i':
       imageFile=optarg;
@@ -147,6 +148,9 @@ int main(int argc, char *argv[]) {
       break;
     case 's':
       fontsize = atoi(optarg);
+      break;
+    case 'o':
+      txtoffs = atoi(optarg);
       break;
     default:
       usage(argv[0]);
@@ -334,6 +338,7 @@ int main(int argc, char *argv[]) {
     for (int i=optind; i<argc; i++) {
       memset(buf, 0, BUFSIZE);
       if (sscanf(argv[i], "%i:%i:%i:%40c", &x, &y, &col, buf) == 4) {
+	y += txtoffs;
 #ifdef DEBUG
 	fprintf(stderr, "Printing \"%s\" in color %d at (%d,%d)\n", buf, col, x, y);
 #endif
@@ -341,6 +346,9 @@ int main(int argc, char *argv[]) {
       }
     }
     FT_Done_FreeType(ft);
+
+    char tmpbuf[1];
+    tmpbuf[0] = fbdata[0];
 
     // Everything done, so unmap the framebuffer
     if (munmap(fbdata, fb_data_size) < 0) {
@@ -352,7 +360,7 @@ int main(int argc, char *argv[]) {
     // automatically, unless something was actively written to it. So this is the
     // kludge to fix that.
     lseek(fbfd, 0, SEEK_SET);
-    write(fbfd, "\0", 1);
+    write(fbfd, tmpbuf, 1);
     close(fbfd);
   }
   return 0;
