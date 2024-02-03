@@ -346,22 +346,21 @@ int main(int argc, char *argv[]) {
       }
     }
     FT_Done_FreeType(ft);
-
-    char tmpbuf[1];
-    tmpbuf[0] = fbdata[0];
-
-    // Everything done, so unmap the framebuffer
-    if (munmap(fbdata, fb_data_size) < 0) {
-      perror("munmap()");
-      return -40;
-    }
-
-    // Here comes the black magic. At one point, the OLED display stopped being updated
-    // automatically, unless something was actively written to it. So this is the
-    // kludge to fix that.
-    lseek(fbfd, 0, SEEK_SET);
-    write(fbfd, tmpbuf, 1);
-    close(fbfd);
   }
+  char tmpbuf[1];
+  tmpbuf[0] = fbdata[0];
+  
+  // Everything done, so unmap the framebuffer
+  if (munmap(fbdata, fb_data_size) < 0) {
+    perror("munmap()");
+    return -40;
+  }
+  
+  // Here comes the black magic. At one point, the OLED display stopped being updated
+  // automatically, unless something was actively written to it. So this is the
+  // kludge to fix that.
+  lseek(fbfd, 0, SEEK_SET);
+  write(fbfd, tmpbuf, 1);
+  close(fbfd);
   return 0;
 }
